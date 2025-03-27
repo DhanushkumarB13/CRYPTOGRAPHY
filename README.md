@@ -30,6 +30,125 @@ STEP-5: Combine all these groups to get the complete cipher text.
 
 ## PROGRAM 
 
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define MOD 26
+
+// Function to compute determinant of a matrix
+int determinant(int matrix[3][3], int n) {
+    int det = 0;
+    if (n == 2) {
+        return (matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0]);
+    }
+    for (int p = 0; p < n; p++) {
+        int temp[3][3], subi = 0;
+        for (int i = 1; i < n; i++) {
+            int subj = 0;
+            for (int j = 0; j < n; j++) {
+                if (j == p) continue;
+                temp[subi][subj] = matrix[i][j];
+                subj++;
+            }
+            subi++;
+        }
+        det = det + (p % 2 == 0 ? 1 : -1) * matrix[0][p] * determinant(temp, n - 1);
+    }
+    return det;
+}
+
+// Function to find modular inverse of a number under modulo MOD
+int modInverse(int a) {
+    a = a % MOD;
+    for (int x = 1; x < MOD; x++) {
+        if ((a * x) % MOD == 1) {
+            return x;
+        }
+    }
+    return -1;
+}
+
+// Function to find inverse of a matrix modulo 26
+void inverseMatrix(int matrix[3][3], int n, int inverse[3][3]) {
+    int det = determinant(matrix, n) % MOD;
+    if (det < 0) det += MOD;
+    int detInv = modInverse(det);
+    if (detInv == -1) {
+        printf("Matrix is not invertible.\n");
+        exit(1);
+    }
+    int temp[3][3];
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            int subMatrix[3][3], subi = 0;
+            for (int x = 0; x < n; x++) {
+                if (x == i) continue;
+                int subj = 0;
+                for (int y = 0; y < n; y++) {
+                    if (y == j) continue;
+                    subMatrix[subi][subj] = matrix[x][y];
+                    subj++;
+                }
+                subi++;
+            }
+            temp[j][i] = ((determinant(subMatrix, n - 1) % MOD + MOD) * ( (i + j) % 2 == 0 ? 1 : -1)) % MOD;
+        }
+    }
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            inverse[i][j] = (temp[i][j] * detInv) % MOD;
+            if (inverse[i][j] < 0) inverse[i][j] += MOD;
+        }
+    }
+}
+
+// Function to encrypt plaintext
+void encrypt(int key[3][3], char message[], int n) {
+    int len = strlen(message);
+    for (int i = 0; i < len; i += n) {
+        int vec[3] = {0};
+        for (int j = 0; j < n; j++) vec[j] = message[i + j] - 'A';
+        int result[3] = {0};
+        for (int x = 0; x < n; x++) {
+            for (int y = 0; y < n; y++) {
+                result[x] += key[x][y] * vec[y];
+            }
+            result[x] %= MOD;
+        }
+        for (int j = 0; j < n; j++) message[i + j] = result[j] + 'A';
+    }
+}
+
+// Function to decrypt ciphertext
+void decrypt(int key[3][3], char message[], int n) {
+    int inverse[3][3];
+    inverseMatrix(key, n, inverse);
+    encrypt(inverse, message, n);
+}
+
+int main() {
+    int key[3][3] = {
+        {6, 24, 1},
+        {13, 16, 10},
+        {20, 17, 15}
+    };
+    char message[] = "ACT";
+    int n = 3;
+    printf("Original message: %s\n", message);
+    encrypt(key, message, n);
+    printf("Encrypted message: %s\n", message);
+    decrypt(key, message, n);
+    printf("Decrypted message: %s\n", message);
+    return 0;
+}
+
+
+
 ## OUTPUT
 
+![Screenshot 2025-03-27 090111](https://github.com/user-attachments/assets/79f765cf-f8ca-4a13-95fc-5e940312acb6)
+
 ## RESULT
+
+implemented the hill cipher substitution technique succesfully.
